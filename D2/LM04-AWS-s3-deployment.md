@@ -1,35 +1,3 @@
-<img src="https://r2cdn.perplexity.ai/pplx-full-logo-primary-dark%402x.png" style="height:64px;margin-right:32px"/>
-
-# name: Deploy to S3
-
-on:
-  push:
-    branches:
-      - main
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-- name: Sync files to S3
-        uses: jakejarvis/s3-sync-action@v0.5.1
-        with:
-          args: --acl public-read --delete
-        env:
-          AWS_S3_BUCKET: vishwa250226rep
-          AWS_ACCESS_KEY_ID: \${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: \${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: 'us-east-2'
-
-Provide a complete lab manual
-
-Adding all the dependies steps
-
-detailed hand on lab
-
-Here is a detailed hands-on lab manual for setting up and running a GitHub Actions workflow that deploys files to an AWS S3 bucket using the `jakejarvis/s3-sync-action`. This includes all dependencies, setup steps, and explanation for each part.
 
 # Lab Manual: Deploy Files to AWS S3 Using GitHub Actions
 
@@ -54,7 +22,7 @@ Before the lab starts, ensure you have the following:
 1. Sign in to the AWS Management Console.
 2. Go to the S3 service.
 3. Click **Create bucket**.
-4. Enter a unique bucket name (e.g., `vishwa250226rep`).
+4. Enter a unique bucket name (e.g., `vishwa250805`).
 5. Select your preferred AWS Region (e.g., `us-east-2`).
 6. Review the default settings or customize bucket policies and permissions as needed.
 7. Create the bucket.
@@ -78,8 +46,8 @@ Before the lab starts, ensure you have the following:
         "s3:*"
       ],
       "Resource": [
-        "arn:aws:s3:::vishwa250226rep",
-        "arn:aws:s3:::vishwa250226rep/*"
+        "arn:aws:s3:::vishwa250805",
+        "arn:aws:s3:::vishwa250805/*"
       ]
     }
   ]
@@ -125,7 +93,7 @@ jobs:
         with:
           args: --acl public-read --delete
         env:
-          AWS_S3_BUCKET: vishwa250226rep
+          AWS_S3_BUCKET: vishwa250805
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: us-east-2
@@ -162,5 +130,50 @@ jobs:
 - Confirm your S3 bucket region and name match the workflow config.
 - Verify that your repository branch triggering the workflow is `main`.
 
-This manual guides you through creating the necessary AWS resources, configuring secrets, writing a GitHub Actions workflow, and deploying files automatically to an S3 bucket on each push to the main branch.
+
+## TIPS:
+# the sync is pushing all the hidden files as well,
+
+How can i avoid it
+
+To **exclude hidden files** (such as dotfiles like `.git`, `.env`, `.DS_Store`, etc.) from being synced to S3 in your GitHub Actions workflow using `jakejarvis/s3-sync-action`, add the appropriate `--exclude` patterns to your `args`. You may use multiple `--exclude` flags—one for each pattern you want to skip.
+
+### Example Workflow Addition
+
+Update your sync step like this:
+
+```yaml
+      - name: Sync files to S3
+        uses: jakejarvis/s3-sync-action@v0.5.1
+        with:
+          args: >-
+            --acl public-read
+            --delete
+            --exclude '.*'
+            --exclude '*/.*'
+            --exclude '.git/*'
+            --exclude '.github/*'
+        env:
+          AWS_S3_BUCKET: vishwa250805
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: 'us-east-2'
+```
+
+
+#### Explanation:
+
+- `--exclude '.*'` skips all hidden files and folders in the root directory (e.g., `.env`, `.gitignore`).
+- `--exclude '*/.*'` skips hidden files and folders in subdirectories.
+- `--exclude '.git/*'` skips everything inside the `.git` directory (extra cautious).
+- `--exclude '.github/*'` skips everything inside the `.github` directory.
+- You can add more `--exclude` rules for any other hidden or unwanted files.
+
+
+#### Notes:
+
+- Each `--exclude` can only take one pattern. Use multiple flags for multiple exclusions.
+- The single quotes around patterns are required for proper shell interpretation on Linux runners[^1][^2][^3].
+
+This configuration will ensure hidden files are **not uploaded** to your S3 bucket.
 
